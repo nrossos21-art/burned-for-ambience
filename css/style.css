@@ -280,7 +280,7 @@ em.accent { font-style: italic; color: var(--brass-deep); font-variation-setting
 @media (max-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; } }
 .card { display: grid; gap: 10px; align-content: start; position: relative; min-width: 0; }
 .card__media {
-  position: relative; aspect-ratio: 4/5; border-radius: var(--radius-lg); overflow: hidden; background: var(--paper);
+  display: block; position: relative; aspect-ratio: 4/5; border-radius: var(--radius-lg); overflow: hidden; background: var(--paper);
   border: 1px solid var(--line);
 }
 .card__media img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
@@ -292,13 +292,14 @@ em.accent { font-style: italic; color: var(--brass-deep); font-variation-setting
 }
 .badge--brass { background: var(--brass); color: #fff; border-color: var(--brass); }
 .badge--out { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.card__visual { position: relative; }
 .card__quick {
-  position: absolute; left: 10px; right: 10px; bottom: 10px; opacity: 0; transform: translateY(8px);
-  transition: .25s var(--ease);
+  position: absolute; right: 10px; bottom: 10px; z-index: 2;
+  opacity: 0; transform: translateY(6px); transition: .25s var(--ease);
 }
 .card:hover .card__quick, .card:focus-within .card__quick { opacity: 1; transform: none; }
 @media (hover: none) { .card__quick { opacity: 1; transform: none; } }
-.card__quick .btn { width: 100%; backdrop-filter: blur(6px); background: rgba(30,26,22,.9); }
+.card__quick .btn { min-height: 40px; padding: 10px 14px; font-size: .82rem; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); background: rgba(30,26,22,.92); box-shadow: 0 6px 18px -8px rgba(0,0,0,.5); }
 .card__body { display: grid; gap: 3px; }
 .card__sub { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
 .card__name { font-family: var(--font-display); font-size: 1.2rem; font-weight: 500; line-height: 1.15; }
@@ -548,7 +549,7 @@ button, a.btn, .swatch, .mood, .chip { touch-action: manipulation; }
   .cats { gap: 8px 6px; }
   .cat small { display: none; }
   .cat b { font-size: .9rem; }
-  .card__quick .btn { padding: 10px 12px; font-size: .8rem; }
+  .card__quick .btn { padding: 9px 12px; font-size: .78rem; }
   .card__name { font-size: 1.05rem; }
   .card__blurb { font-size: .8rem; }
   .qty button { width: 40px; height: 40px; }
@@ -589,3 +590,7 @@ button, a.btn, .swatch, .mood, .chip { touch-action: manipulation; }
   .consent__btns .btn { padding: 10px 12px; }
 }
 @media (max-width: 350px) { .logo__word { display: none; } }
+
+/* ---------- Touch polish ---------- */
+a, button, .swatch, .mood, .chip { -webkit-tap-highlight-color: transparent; }
+@media (hover: none) { .card:hover .card__media img { transform: none; } }

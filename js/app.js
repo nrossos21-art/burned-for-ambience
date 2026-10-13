@@ -194,7 +194,6 @@
     if (line) line.qty += qty; else cart.push({ handle, variantId: v.id, qty });
     cartSave(); renderCart();
     window.BFA_TRACK && BFA_TRACK('add_to_cart', { value: v.price * qty, items: [{ id: v.id, name: p.name, category: p.cat, variant: v.title, price: v.price, qty }] });
-    toast(`Added ${p.name}${v.title !== 'Default Title' ? ' · ' + v.title : ''} to your bag`);
     openDrawer('cart-drawer');
   }
   function setQty(idx, qty) { if (qty <= 0) cart.splice(idx, 1); else cart[idx].qty = qty; cartSave(); renderCart(); }
@@ -244,7 +243,7 @@
     foot.innerHTML = `
       <div class="cart-total"><span>Subtotal</span><span>${eur(sub)}</span></div>
       <p class="small muted">Delivery calculated at checkout. Cyprus only.</p>
-      <a class="btn btn--primary btn--block" id="checkout-btn" href="${checkoutUrl()}" target="_blank" rel="noopener">Checkout securely</a>
+      <a class="btn btn--primary btn--block" id="checkout-btn" href="${checkoutUrl()}">Checkout securely</a>
       <button class="btn btn--ghost btn--block btn--sm" data-close>Continue shopping</button>`;
     $$('[data-dec]', body).forEach(b => b.onclick = () => setQty(+b.dataset.dec, cart[+b.dataset.dec].qty - 1));
     $$('[data-inc]', body).forEach(b => b.onclick = () => setQty(+b.dataset.inc, cart[+b.dataset.inc].qty + 1));
@@ -302,10 +301,12 @@
       : `<a class="btn btn--primary btn--sm" href="product.html#${encodeURIComponent(p.handle)}">Choose ${esc((p.options[0].name || 'option').toLowerCase())}</a>`;
     return `
       <article class="card">
+        <div class="card__visual">
         <a class="card__media ${p.available ? '' : 'card__media--soldout'}" href="product.html#${encodeURIComponent(p.handle)}">
           <img src="${p.images[0] || ''}" alt="${esc(p.name)}" loading="lazy">${badge}
         </a>
         ${quick ? `<div class="card__quick">${quick}</div>` : ''}
+        </div>
         <div class="card__body">
           <span class="card__sub">${esc(p.sub)}</span>
           <a class="card__name" href="product.html#${encodeURIComponent(p.handle)}">${esc(p.name)}</a>
@@ -359,7 +360,6 @@
     const bh = $('#bestsellers'); if (bh) mountCards(bh, best);
     const ch = $('#charm-grid'); if (ch) mountCards(ch, P.filter(p => p.cat === 'charms' && p.available).slice(0, 4));
     const fh = $('#finder'); if (fh) mountFinder(fh);
-    $$('[data-add]').forEach(b => { if (!b.dataset.bound) { b.dataset.bound = 1; b.addEventListener('click', e => { e.preventDefault(); addToCart(b.dataset.add, +b.dataset.variant); }); } });
   }
 
   function pageShop() {
@@ -463,7 +463,7 @@
               <div class="qty qty--lg"><button id="q-dec" aria-label="Decrease">−</button><output id="q-out">${qty}</output><button id="q-inc" aria-label="Increase">+</button></div>
               <button class="btn btn--primary" id="add" ${variant.available ? '' : 'disabled'}>${variant.available ? 'Add to bag' : 'Sold out'}</button>
             </div>
-            ${variant.available ? `<a class="btn btn--brass" id="buy-now" href="${buyUrl(variant.id, qty)}" target="_blank" rel="noopener">Buy it now</a>` : `<button class="btn btn--ghost" id="notify">Email me when it’s back</button>`}
+            ${variant.available ? `<a class="btn btn--brass" id="buy-now" href="${buyUrl(variant.id, qty)}">Buy it now</a>` : `<button class="btn btn--ghost" id="notify">Email me when it’s back</button>`}
             <div class="specs">${specs.map(([i, t]) => `<span>${i}${t}</span>`).join('')}</div>
             ${hasNotes ? `<div class="pyramid"><div><small>Top</small><b>${esc(p.notes.top || '—')}</b></div><div><small>Heart</small><b>${esc(p.notes.heart || '—')}</b></div><div><small>Base</small><b>${esc(p.notes.base || '—')}</b></div></div>` : ''}
             ${pair ? `<div class="pair"><img src="${pair.images[0]}" alt=""><div><b>${pairT}</b><small>${pairS}</small><small><strong>${esc(pair.name)}</strong> · ${eur(pair.price)}</small></div>${pair.options.length ? `<a class="btn btn--ghost btn--sm" href="product.html#${encodeURIComponent(pair.handle)}">Choose</a>` : `<button class="btn btn--primary btn--sm" data-add="${esc(pair.handle)}" data-variant="${pv.id}">Add</button>`}</div>` : ''}
@@ -477,7 +477,15 @@
         ${related.length ? `<section class="section--tight"><div class="section-head"><div><span class="eyebrow">Keep exploring</span><h2 style="font-size:1.8rem">More ${CATS[p.cat]?.name.toLowerCase() || 'like this'}</h2></div><a class="link-arrow" href="shop.html#${p.cat}">See all →</a></div><div class="grid" id="related"></div></section>` : ''}
         <div class="sticky-buy" id="sticky"><div><b>${eur(variant.price)}</b><br><small class="muted">${esc(p.name)}</small></div><button class="btn btn--primary" id="add-sticky" ${variant.available ? '' : 'disabled'}>${variant.available ? 'Add to bag' : 'Sold out'}</button></div>`;
       $$('[data-img]', host).forEach(b => b.onclick = () => { $('#g-main').src = b.dataset.img; $$('[data-img]', host).forEach(x => x.setAttribute('aria-current', x === b)); });
-      $$('.swatch', host).forEach(b => b.onclick = () => { variant = p.variants.find(v => v.id === +b.dataset.v); render(); });
+      $$('.swatch', host).forEach(b => b.onclick = () => {
+        variant = p.variants.find(v => v.id === +b.dataset.v);
+        $$('.swatch', host).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        $('#v-name').textContent = variant.title;
+        $('#price').textContent = eur(variant.price);
+        [$('#add'), $('#add-sticky')].forEach(x => { x.disabled = !variant.available; x.textContent = variant.available ? 'Add to bag' : 'Sold out'; });
+        $('#sticky b').textContent = eur(variant.price);
+        const bn = $('#buy-now'); if (bn) { bn.href = buyUrl(variant.id, qty); bn.hidden = !variant.available; }
+      });
       $('#q-dec').onclick = () => { qty = Math.max(1, qty - 1); $('#q-out').textContent = qty; const bn = $('#buy-now'); if (bn) bn.href = buyUrl(variant.id, qty); };
       $('#q-inc').onclick = () => { qty = Math.min(20, qty + 1); $('#q-out').textContent = qty; const bn = $('#buy-now'); if (bn) bn.href = buyUrl(variant.id, qty); };
       $('#add').onclick = () => addToCart(p.handle, variant.id, qty);
